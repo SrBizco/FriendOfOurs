@@ -50,6 +50,7 @@ namespace FriendOfOurs.NPCs
                 return;
             }
 
+            DespawnDeadPedestrians();
             DespawnFarPedestrians();
 
             if (activePedestrians.Count >= maxAlive || Time.time < nextSpawnTime)
@@ -155,6 +156,27 @@ namespace FriendOfOurs.NPCs
                 float distance = Vector3.Distance(player.position, pedestrian.transform.position);
                 bool isVisible = IsWorldPointVisible(pedestrian.transform.position);
                 if (!PedestrianSpawnRules.ShouldDespawn(distance, isVisible, despawnDistance))
+                {
+                    continue;
+                }
+
+                activePedestrians.RemoveAt(i);
+                ReturnToPool(pedestrian);
+            }
+        }
+
+        private void DespawnDeadPedestrians()
+        {
+            for (int i = activePedestrians.Count - 1; i >= 0; i--)
+            {
+                PedestrianController pedestrian = activePedestrians[i];
+                if (pedestrian == null)
+                {
+                    activePedestrians.RemoveAt(i);
+                    continue;
+                }
+
+                if (!pedestrian.CanDespawnDead)
                 {
                     continue;
                 }

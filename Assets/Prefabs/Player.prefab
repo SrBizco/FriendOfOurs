@@ -13,7 +13,9 @@ GameObject:
   - component: {fileID: 6798831111712873504}
   - component: {fileID: 2622129726310020680}
   - component: {fileID: 650543331586251986}
-  m_Layer: 0
+  - component: {fileID: 4888098869027812447}
+  - component: {fileID: 320902404002171998}
+  m_Layer: 7
   m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -109,7 +111,7 @@ MonoBehaviour:
   groundLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  animationController: {fileID: 0}
+  animationController: {fileID: 650543331586251986}
 --- !u!114 &650543331586251986
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -123,6 +125,50 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   animator: {fileID: 327968291040427150}
+  combatLayerName: CombatUpperBody
+  combatLayerBlendSpeed: 10
+  punchTrigger: Punch
+  leftHookTrigger: LeftHook
+  rightHookTrigger: RightHook
+--- !u!114 &4888098869027812447
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7457107678001931164}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0dbe19b0526c9c49a0e6562fd4d0623, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  punchDamage: 25
+  punchCooldown: 0.55
+  punchHitDelay: 0.12
+  comboResetTime: 0.9
+  combatLayerHoldTime: 2
+  punchRange: 1.4
+  punchRadius: 0.65
+  punchHeightOffset: 1.1
+  attackOrigin: {fileID: 0}
+  hitLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  debugHits: 1
+  animationController: {fileID: 650543331586251986}
+--- !u!114 &320902404002171998
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7457107678001931164}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9b89d019710e1042a38bb84a136f2a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 100
 --- !u!1001 &423026831510148086
 PrefabInstance:
   m_ObjectHideFlags: 0

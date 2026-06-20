@@ -23,6 +23,7 @@ namespace FriendOfOurs.Gameplay
 
         private Rigidbody body;
         private Collider bodyCollider;
+        private Health health;
         private PlayerJumpCounter jumpCounter;
         private PlayerStateMachine stateMachine;
         private Vector3 moveDirection;
@@ -31,11 +32,13 @@ namespace FriendOfOurs.Gameplay
         private bool isGrounded;
         private bool wasGrounded;
         private bool isSprinting;
+        private bool isDead;
         private readonly Collider[] groundHits = new Collider[8];
 
         public PlayerIdleState IdleState { get; private set; }
         public PlayerMoveState MoveState { get; private set; }
         public PlayerJumpState JumpState { get; private set; }
+        public PlayerDeadState DeadState { get; private set; }
         public bool HasMoveInput => moveDirection.sqrMagnitude > 0.0001f;
         public bool IsGrounded => isGrounded;
         public bool CanFinishJump => isGrounded && body.velocity.y <= 0.1f;
@@ -44,6 +47,12 @@ namespace FriendOfOurs.Gameplay
         {
             body = GetComponent<Rigidbody>();
             bodyCollider = GetComponent<Collider>();
+            health = GetComponent<Health>();
+            if (health == null)
+            {
+                health = gameObject.AddComponent<Health>();
+            }
+
             body.interpolation = RigidbodyInterpolation.Interpolate;
 
             if (animationController == null)
@@ -56,6 +65,23 @@ namespace FriendOfOurs.Gameplay
             IdleState = new PlayerIdleState(this);
             MoveState = new PlayerMoveState(this);
             JumpState = new PlayerJumpState(this);
+            DeadState = new PlayerDeadState(this);
+        }
+
+        private void OnEnable()
+        {
+            if (health != null)
+            {
+                health.Died += OnDied;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (health != null)
+            {
+                health.Died -= OnDied;
+            }
         }
 
         private void Start()
@@ -65,6 +91,13 @@ namespace FriendOfOurs.Gameplay
 
         private void Update()
         {
+            if (isDead)
+            {
+                UpdateGroundedState();
+                stateMachine.Tick();
+                return;
+            }
+
             moveInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
             isSprinting = Input.GetKey(KeyCode.LeftShift);
             jumpRequested |= Input.GetButtonDown("Jump");
@@ -147,6 +180,25 @@ namespace FriendOfOurs.Gameplay
             stateMachine.ChangeState(nextState);
         }
 
+        public void StopMovement()
+        {
+            moveInput = Vector2.zero;
+            moveDirection = Vector3.zero;
+            jumpRequested = false;
+            isSprinting = false;
+
+            if (body != null)
+            {
+                body.velocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
+            }
+        }
+
+        public void PlayDeathAnimation()
+        {
+            animationController?.PlayDeath();
+        }
+
         private void UpdateGroundedState()
         {
             Vector3 checkPosition = GetGroundCheckPosition();
@@ -203,6 +255,17 @@ namespace FriendOfOurs.Gameplay
 
             float animationSpeed = TopDownControlMath.GetAnimationSpeed(moveInput.magnitude, isSprinting);
             animationController.SetLocomotion(animationSpeed, isGrounded, body.velocity.y);
+        }
+
+        private void OnDied(DamageInfo damageInfo)
+        {
+            if (isDead)
+            {
+                return;
+            }
+
+            isDead = true;
+            ChangeState(DeadState);
         }
     }
 }

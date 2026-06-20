@@ -13,7 +13,8 @@ GameObject:
   - component: {fileID: 6798831111712873504}
   - component: {fileID: 2600961224704374101}
   - component: {fileID: 8988980972977827876}
-  m_Layer: 0
+  - component: {fileID: 4872596240990592380}
+  m_Layer: 8
   m_Name: NPC 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -120,13 +121,58 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1981c494aacac5746922b52ed12b1a0f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  wanderRadius: 18
+  routeStepDistance: 16
+  routeDirectionJitter: 18
   destinationSampleRadius: 6
   minPauseTime: 0.2
   maxPauseTime: 1.2
+  stuckCheckInterval: 1.5
+  stuckMinimumMoveDistance: 0.25
   areaMask: -1
+  walkSpeed: 2
+  runSpeed: 4.5
   animator: {fileID: 1702199049317689756}
   speedParameter: Speed
+  hitTrigger: Hit
+  deathTrigger: Death
+  punchTrigger: Punch
+  leftHookTrigger: LeftHook
+  rightHookTrigger: RightHook
+  combatLayerName: CombatUpperBody
+  combatLayerBlendSpeed: 10
+  walkAnimationSpeed: 0.5
+  fleeAnimationSpeed: 1
+  combatAnimationSpeed: 1
+  comboResetTime: 1.1
+  attackAnimationLockTime: 0.65
+  fightBackChance: 0.2
+  fleeDuration: 6
+  fleeDistance: 12
+  combatAttackRange: 1.25
+  combatAttackRadius: 0.75
+  combatAttackHeightOffset: 1.1
+  combatStoppingDistance: 1.35
+  combatAttackCooldown: 1.2
+  combatDamage: 10
+  combatGiveUpDistance: 9
+  deadDespawnDelay: 5
+  combatHitLayers:
+    serializedVersion: 2
+    m_Bits: 128
+  debugCombat: 1
+--- !u!114 &4872596240990592380
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7457107678001931164}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9b89d019710e1042a38bb84a136f2a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 100
 --- !u!1001 &1643445125009702482
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -182,7 +228,7 @@ PrefabInstance:
     - target: {fileID: 95100772246247374, guid: 1aeb5bfabdcdbcd4583e83139d952b1d, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 69da5416376534149868129356c500c2, type: 2}
+      objectReference: {fileID: 9100000, guid: 25f7ec6755255db499328ad0119b5bc5, type: 2}
     - target: {fileID: 95100772246247374, guid: 1aeb5bfabdcdbcd4583e83139d952b1d, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
