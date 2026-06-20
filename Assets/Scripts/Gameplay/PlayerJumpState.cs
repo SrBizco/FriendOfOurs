@@ -19,7 +19,7 @@ namespace FriendOfOurs.Gameplay
                 return;
             }
 
-            if (Player.IsGrounded)
+            if (Player.CanFinishJump)
             {
                 Player.ChangeState(Player.HasMoveInput ? Player.MoveState : Player.IdleState);
             }

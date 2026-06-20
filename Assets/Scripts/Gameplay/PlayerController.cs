@@ -22,6 +22,7 @@ namespace FriendOfOurs.Gameplay
         [SerializeField] private PlayerAnimationController animationController;
 
         private Rigidbody body;
+        private Collider bodyCollider;
         private PlayerJumpCounter jumpCounter;
         private PlayerStateMachine stateMachine;
         private Vector3 moveDirection;
@@ -37,10 +38,12 @@ namespace FriendOfOurs.Gameplay
         public PlayerJumpState JumpState { get; private set; }
         public bool HasMoveInput => moveDirection.sqrMagnitude > 0.0001f;
         public bool IsGrounded => isGrounded;
+        public bool CanFinishJump => isGrounded && body.velocity.y <= 0.1f;
 
         private void Awake()
         {
             body = GetComponent<Rigidbody>();
+            bodyCollider = GetComponent<Collider>();
             body.interpolation = RigidbodyInterpolation.Interpolate;
 
             if (animationController == null)
@@ -146,9 +149,7 @@ namespace FriendOfOurs.Gameplay
 
         private void UpdateGroundedState()
         {
-            Vector3 checkPosition = groundCheck != null
-                ? groundCheck.position
-                : transform.position + Vector3.down * 0.9f;
+            Vector3 checkPosition = GetGroundCheckPosition();
 
             wasGrounded = isGrounded;
             int hitCount = Physics.OverlapSphereNonAlloc(
@@ -173,6 +174,24 @@ namespace FriendOfOurs.Gameplay
             {
                 jumpCounter.Reset(maxConsecutiveJumps);
             }
+        }
+
+        private Vector3 GetGroundCheckPosition()
+        {
+            if (groundCheck != null)
+            {
+                return groundCheck.position;
+            }
+
+            if (bodyCollider != null)
+            {
+                return TopDownControlMath.GetGroundCheckPosition(
+                    transform.position,
+                    bodyCollider.bounds,
+                    groundCheckRadius);
+            }
+
+            return transform.position + Vector3.down * groundCheckRadius;
         }
 
         private void UpdateAnimation()

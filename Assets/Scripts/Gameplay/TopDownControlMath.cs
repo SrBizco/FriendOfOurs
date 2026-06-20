@@ -40,5 +40,13 @@ namespace FriendOfOurs.Gameplay
             Vector3 horizontalOffset = yawRotation * new Vector3(0f, 0f, -distance);
             return targetPosition + horizontalOffset + Vector3.up * height;
         }
+
+        public static Vector3 GetGroundCheckPosition(Vector3 fallbackPosition, Bounds colliderBounds, float groundCheckRadius)
+        {
+            return new Vector3(
+                colliderBounds.center.x,
+                colliderBounds.min.y + groundCheckRadius,
+                colliderBounds.center.z);
+        }
     }
 }

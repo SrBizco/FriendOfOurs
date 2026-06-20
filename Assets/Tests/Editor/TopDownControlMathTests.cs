@@ -77,5 +77,18 @@ namespace FriendOfOurs.Tests
             Assert.That(cameraPosition.y, Is.EqualTo(8f).Within(0.0001f));
             Assert.That(cameraPosition.z, Is.EqualTo(-7f).Within(0.0001f));
         }
+
+        [Test]
+        public void GetGroundCheckPosition_UsesColliderBottomWhenColliderExists()
+        {
+            Bounds bounds = new Bounds(new Vector3(0f, 1f, 0f), new Vector3(1f, 2f, 1f));
+
+            Vector3 checkPosition = TopDownControlMath.GetGroundCheckPosition(
+                Vector3.zero,
+                bounds,
+                0.25f);
+
+            Assert.That(checkPosition, Is.EqualTo(new Vector3(0f, 0.25f, 0f)));
+        }
     }
 }
