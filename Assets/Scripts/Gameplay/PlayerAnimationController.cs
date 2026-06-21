@@ -7,9 +7,13 @@ namespace FriendOfOurs.Gameplay
         [SerializeField] private Animator animator;
         [SerializeField] private string combatLayerName = "CombatUpperBody";
         [SerializeField] private float combatLayerBlendSpeed = 10f;
+        [SerializeField] private string hitReactionLayerName = "HitReactionUpperBody";
+        [SerializeField] private float hitReactionLayerBlendSpeed = 16f;
+        [SerializeField, Min(0f)] private float hitReactionLayerHoldTime = 0.45f;
         [SerializeField] private string punchTrigger = "Punch";
         [SerializeField] private string leftHookTrigger = "LeftHook";
         [SerializeField] private string rightHookTrigger = "RightHook";
+        [SerializeField] private string hitTrigger = "Hit";
         [SerializeField] private string deathTrigger = "Death";
         [SerializeField] private bool debugAnimatorParameters;
 
@@ -17,10 +21,14 @@ namespace FriendOfOurs.Gameplay
         private static readonly int IsGroundedHash = Animator.StringToHash("IsGrounded");
         private static readonly int VerticalSpeedHash = Animator.StringToHash("VerticalSpeed");
         private static readonly int JumpHash = Animator.StringToHash("Jump");
+        private int hitHash;
         private int deathHash;
         private int[] unarmedAttackHashes;
         private int combatLayerIndex = -1;
+        private int hitReactionLayerIndex = -1;
         private float targetCombatLayerWeight;
+        private float targetHitReactionLayerWeight;
+        private float hitReactionLayerReleaseTime;
 
         private void Awake()
         {
@@ -35,11 +43,14 @@ namespace FriendOfOurs.Gameplay
                 Animator.StringToHash(leftHookTrigger),
                 Animator.StringToHash(rightHookTrigger)
             };
+            hitHash = Animator.StringToHash(hitTrigger);
             deathHash = Animator.StringToHash(deathTrigger);
 
             if (animator != null)
             {
                 combatLayerIndex = animator.GetLayerIndex(combatLayerName);
+                hitReactionLayerIndex = animator.GetLayerIndex(hitReactionLayerName);
+                SetHitReactionLayerActive(false, true);
                 ValidateAnimatorSetup();
             }
         }
@@ -47,6 +58,7 @@ namespace FriendOfOurs.Gameplay
         private void Update()
         {
             UpdateCombatLayerWeight();
+            UpdateHitReactionLayerWeight();
         }
 
         public void SetLocomotion(float speed, bool isGrounded, float verticalSpeed)
@@ -79,10 +91,23 @@ namespace FriendOfOurs.Gameplay
             }
 
             targetCombatLayerWeight = 0f;
+            SetHitReactionLayerActive(false, true);
             animator.SetFloat(SpeedHash, 0f);
             animator.SetBool(IsGroundedHash, true);
             animator.SetFloat(VerticalSpeedHash, 0f);
             animator.SetTrigger(deathHash);
+        }
+
+        public void PlayHitReaction()
+        {
+            if (animator == null)
+            {
+                return;
+            }
+
+            SetHitReactionLayerActive(true, true);
+            hitReactionLayerReleaseTime = Time.time + hitReactionLayerHoldTime;
+            animator.SetTrigger(hitHash);
         }
 
         public void PlayUnarmedAttack(int comboIndex)
@@ -102,6 +127,16 @@ namespace FriendOfOurs.Gameplay
             targetCombatLayerWeight = isActive ? 1f : 0f;
         }
 
+        private void SetHitReactionLayerActive(bool isActive, bool immediate = false)
+        {
+            targetHitReactionLayerWeight = isActive ? 1f : 0f;
+
+            if (immediate)
+            {
+                SetLayerWeightImmediate(hitReactionLayerIndex, targetHitReactionLayerWeight);
+            }
+        }
+
         private void UpdateCombatLayerWeight()
         {
             if (animator == null || combatLayerIndex < 0)
@@ -118,6 +153,38 @@ namespace FriendOfOurs.Gameplay
             animator.SetLayerWeight(combatLayerIndex, nextWeight);
         }
 
+        private void UpdateHitReactionLayerWeight()
+        {
+            if (animator == null || hitReactionLayerIndex < 0)
+            {
+                return;
+            }
+
+            if (hitReactionLayerReleaseTime > 0f && Time.time >= hitReactionLayerReleaseTime)
+            {
+                hitReactionLayerReleaseTime = 0f;
+                SetHitReactionLayerActive(false);
+            }
+
+            float currentWeight = animator.GetLayerWeight(hitReactionLayerIndex);
+            float nextWeight = Mathf.MoveTowards(
+                currentWeight,
+                targetHitReactionLayerWeight,
+                hitReactionLayerBlendSpeed * Time.deltaTime);
+
+            animator.SetLayerWeight(hitReactionLayerIndex, nextWeight);
+        }
+
+        private void SetLayerWeightImmediate(int layerIndex, float weight)
+        {
+            if (animator == null || layerIndex < 0)
+            {
+                return;
+            }
+
+            animator.SetLayerWeight(layerIndex, weight);
+        }
+
         private void ValidateAnimatorSetup()
         {
             if (!debugAnimatorParameters || animator == null)
@@ -129,6 +196,7 @@ namespace FriendOfOurs.Gameplay
             LogMissingParameter(IsGroundedHash, "IsGrounded");
             LogMissingParameter(VerticalSpeedHash, "VerticalSpeed");
             LogMissingParameter(JumpHash, "Jump");
+            LogMissingParameter(hitHash, hitTrigger);
             LogMissingParameter(deathHash, deathTrigger);
 
             for (int i = 0; i < unarmedAttackHashes.Length; i++)
@@ -140,6 +208,11 @@ namespace FriendOfOurs.Gameplay
             if (combatLayerIndex < 0)
             {
                 Debug.LogWarning($"Animator layer '{combatLayerName}' was not found.", this);
+            }
+
+            if (hitReactionLayerIndex < 0)
+            {
+                Debug.LogWarning($"Animator layer '{hitReactionLayerName}' was not found.", this);
             }
         }
 

@@ -31,6 +31,9 @@ namespace FriendOfOurs.NPCs
         [SerializeField] private string rightHookTrigger = "RightHook";
         [SerializeField] private string combatLayerName = "CombatUpperBody";
         [SerializeField, Min(0f)] private float combatLayerBlendSpeed = 10f;
+        [SerializeField] private string hitReactionLayerName = "HitReactionUpperBody";
+        [SerializeField, Min(0f)] private float hitReactionLayerBlendSpeed = 16f;
+        [SerializeField, Min(0f)] private float hitReactionLayerHoldTime = 0.45f;
         [SerializeField, Range(0f, 1f)] private float walkAnimationSpeed = 0.5f;
         [SerializeField, Range(0f, 1f)] private float fleeAnimationSpeed = 1f;
         [SerializeField, Range(0f, 1f)] private float combatAnimationSpeed = 1f;
@@ -64,6 +67,7 @@ namespace FriendOfOurs.NPCs
         private int[] attackHashes;
         private string[] attackTriggerNames;
         private int combatLayerIndex = -1;
+        private int hitReactionLayerIndex = -1;
         private PedestrianStateMachine stateMachine;
         private PedestrianWanderState wanderState;
         private PedestrianPauseState pauseState;
@@ -78,6 +82,8 @@ namespace FriendOfOurs.NPCs
         private float currentAnimationSpeedMax;
         private float attackAnimationLockEndTime;
         private float targetCombatLayerWeight;
+        private float targetHitReactionLayerWeight;
+        private float hitReactionLayerReleaseTime;
         private float deathTime;
         private Transform threat;
         private ThreatReaction threatReaction;
@@ -116,6 +122,7 @@ namespace FriendOfOurs.NPCs
             stateMachine?.Tick();
             UpdateAnimation();
             UpdateCombatLayerWeight();
+            UpdateHitReactionLayerWeight();
         }
 
         public void Initialize(Vector3 position, int navMeshAreaMask)
@@ -139,7 +146,9 @@ namespace FriendOfOurs.NPCs
             threatReaction = ThreatReaction.None;
             deathTime = 0f;
             attackAnimationLockEndTime = 0f;
+            hitReactionLayerReleaseTime = 0f;
             ResetAnimatorForReuse();
+            SetHitReactionLayerActive(false, true);
             BeginWalkMovement();
             ResetRouteDirection();
             lastStuckCheckPosition = position;
@@ -533,6 +542,12 @@ namespace FriendOfOurs.NPCs
                 {
                     Debug.LogWarning($"Animator layer '{combatLayerName}' was not found on '{animator.name}'.", this);
                 }
+
+                hitReactionLayerIndex = animator.GetLayerIndex(hitReactionLayerName);
+                if (debugCombat && hitReactionLayerIndex < 0)
+                {
+                    Debug.LogWarning($"Animator layer '{hitReactionLayerName}' was not found on '{animator.name}'.", this);
+                }
             }
 
             speedHash = Animator.StringToHash(speedParameter);
@@ -614,6 +629,16 @@ namespace FriendOfOurs.NPCs
             targetCombatLayerWeight = isActive ? 1f : 0f;
         }
 
+        private void SetHitReactionLayerActive(bool isActive, bool immediate = false)
+        {
+            targetHitReactionLayerWeight = isActive ? 1f : 0f;
+
+            if (immediate)
+            {
+                SetLayerWeightImmediate(hitReactionLayerIndex, targetHitReactionLayerWeight);
+            }
+        }
+
         private void ResetAnimatorForReuse()
         {
             if (animator == null)
@@ -639,6 +664,50 @@ namespace FriendOfOurs.NPCs
                 combatLayerBlendSpeed * Time.deltaTime);
 
             animator.SetLayerWeight(combatLayerIndex, nextWeight);
+        }
+
+        private void UpdateHitReactionLayerWeight()
+        {
+            if (animator == null || hitReactionLayerIndex < 0)
+            {
+                return;
+            }
+
+            if (hitReactionLayerReleaseTime > 0f && Time.time >= hitReactionLayerReleaseTime)
+            {
+                hitReactionLayerReleaseTime = 0f;
+                SetHitReactionLayerActive(false);
+            }
+
+            float currentWeight = animator.GetLayerWeight(hitReactionLayerIndex);
+            float nextWeight = Mathf.MoveTowards(
+                currentWeight,
+                targetHitReactionLayerWeight,
+                hitReactionLayerBlendSpeed * Time.deltaTime);
+
+            animator.SetLayerWeight(hitReactionLayerIndex, nextWeight);
+        }
+
+        private void SetLayerWeightImmediate(int layerIndex, float weight)
+        {
+            if (animator == null || layerIndex < 0)
+            {
+                return;
+            }
+
+            animator.SetLayerWeight(layerIndex, weight);
+        }
+
+        private void PlayHitReaction()
+        {
+            if (animator == null)
+            {
+                return;
+            }
+
+            SetHitReactionLayerActive(true, true);
+            hitReactionLayerReleaseTime = Time.time + hitReactionLayerHoldTime;
+            TrySetAnimatorTrigger(hitHash, hitTrigger);
         }
 
         private bool TrySetAnimatorTrigger(int triggerHash, string triggerName)
@@ -714,10 +783,7 @@ namespace FriendOfOurs.NPCs
                 return;
             }
 
-            if (animator != null)
-            {
-                TrySetAnimatorTrigger(hitHash, hitTrigger);
-            }
+            PlayHitReaction();
 
             Transform attacker = damageInfo.Attacker != null ? damageInfo.Attacker.transform : null;
             if (attacker == null)

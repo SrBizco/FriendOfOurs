@@ -72,6 +72,7 @@ namespace FriendOfOurs.Gameplay
         {
             if (health != null)
             {
+                health.Damaged += OnDamaged;
                 health.Died += OnDied;
             }
         }
@@ -80,6 +81,7 @@ namespace FriendOfOurs.Gameplay
         {
             if (health != null)
             {
+                health.Damaged -= OnDamaged;
                 health.Died -= OnDied;
             }
         }
@@ -266,6 +268,16 @@ namespace FriendOfOurs.Gameplay
 
             isDead = true;
             ChangeState(DeadState);
+        }
+
+        private void OnDamaged(DamageInfo damageInfo, float appliedDamage)
+        {
+            if (isDead || health.IsDead)
+            {
+                return;
+            }
+
+            animationController?.PlayHitReaction();
         }
     }
 }
