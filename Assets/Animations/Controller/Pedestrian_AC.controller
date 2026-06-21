@@ -457,7 +457,7 @@ AnimatorController:
   - serializedVersion: 5
     m_Name: HitReactionUpperBody
     m_StateMachine: {fileID: 1912379458355281346}
-    m_Mask: {fileID: 31900000, guid: a0a0278200f48cd4991541973abc5886, type: 2}
+    m_Mask: {fileID: 31900000, guid: 7ce93ac128706244d86f69b0d4e180f6, type: 2}
     m_Motions: []
     m_Behaviours: []
     m_BlendingMode: 0
