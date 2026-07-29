@@ -6,8 +6,10 @@ namespace FriendOfOurs.Traffic
     public sealed class NpcCarController : MonoBehaviour
     {
         [Header("Route")]
-        [SerializeField] private TrafficLane lane;
+        [SerializeField] private TrafficNetwork trafficNetwork;
+        [SerializeField, Min(0)] private int currentLaneIndex;
         [SerializeField, Min(0.5f)] private float lookAheadDistance = 6f;
+        [SerializeField, Min(0.1f)] private float laneSwitchDistance = 3f;
         [SerializeField, Min(2)] private int closestPointSamples = 48;
         [SerializeField] private bool loopLane;
 
@@ -47,6 +49,7 @@ namespace FriendOfOurs.Traffic
         private float nextGroundedDebugTime;
         private float startupEndTime;
         private bool originalUseGravity;
+        private bool missingNetworkWarningLogged;
 
         private void Awake()
         {
@@ -67,14 +70,32 @@ namespace FriendOfOurs.Traffic
             ValidateSetup();
         }
 
+        private void Start()
+        {
+            ResolveTrafficNetwork();
+        }
+
         private void Reset()
         {
             body = GetComponent<Rigidbody>();
         }
 
+        public void InitializeTrafficRoute(TrafficNetwork network, int laneIndex)
+        {
+            trafficNetwork = network;
+            currentLaneIndex = Mathf.Max(0, laneIndex);
+            currentSteerAngle = 0f;
+            missingNetworkWarningLogged = false;
+
+            lastTargetPoint = trafficNetwork != null && trafficNetwork.IsValidLaneIndex(currentLaneIndex)
+                ? trafficNetwork.GetPointAtDistance(currentLaneIndex, 0f)
+                : transform.position;
+        }
+
         private void FixedUpdate()
         {
             LogGroundedState();
+            ResolveTrafficNetwork();
 
             if (IsSettlingAtStartup())
             {
@@ -90,26 +111,37 @@ namespace FriendOfOurs.Traffic
                 return;
             }
 
-            if (lane == null || lane.Length <= 0.0001f)
+            if (trafficNetwork == null || !trafficNetwork.IsValidLaneIndex(currentLaneIndex))
+            {
+                LogMissingTrafficNetworkOnce();
+                ApplyDrive(0f, stopBrakeTorque, 0f);
+                return;
+            }
+
+            float laneLength = trafficNetwork.GetLaneLength(currentLaneIndex);
+            if (laneLength <= 0.0001f)
             {
                 ApplyDrive(0f, stopBrakeTorque, 0f);
                 return;
             }
 
-            float closestDistance = lane.FindClosestDistance(transform.position, closestPointSamples);
+            float closestDistance = trafficNetwork.FindClosestDistance(currentLaneIndex, transform.position, closestPointSamples);
+            TrySwitchToNextLane(ref closestDistance);
+
+            laneLength = trafficNetwork.GetLaneLength(currentLaneIndex);
             float targetDistance = closestDistance + lookAheadDistance;
-            bool reachedEnd = targetDistance >= lane.Length;
+            bool reachedEnd = targetDistance >= laneLength;
 
             if (loopLane)
             {
-                targetDistance %= lane.Length;
+                targetDistance %= laneLength;
             }
             else
             {
-                targetDistance = Mathf.Min(targetDistance, lane.Length);
+                targetDistance = Mathf.Min(targetDistance, laneLength);
             }
 
-            Vector3 targetPoint = lane.GetPointAtDistance(targetDistance);
+            Vector3 targetPoint = trafficNetwork.GetPointAtDistance(currentLaneIndex, targetDistance);
             lastTargetPoint = targetPoint;
             Vector3 directionToTarget = targetPoint - transform.position;
             float desiredSteer = TrafficSteeringMath.GetSignedSteerAngle(transform.forward, directionToTarget, maxSteerAngle);
@@ -119,16 +151,69 @@ namespace FriendOfOurs.Traffic
                 steerResponse * Time.fixedDeltaTime);
 
             float currentSpeed = body != null ? body.velocity.magnitude : 0f;
-            float throttle = TrafficSteeringMath.GetAccelerationInput(currentSpeed, targetSpeed);
-            float brakeTorque = currentSpeed > targetSpeed ? speedLimitBrakeTorque : 0f;
+            float laneSpeedLimit = trafficNetwork.GetLaneSpeedLimit(currentLaneIndex);
+            float activeTargetSpeed = laneSpeedLimit > 0f ? Mathf.Min(targetSpeed, laneSpeedLimit) : targetSpeed;
+            float throttle = TrafficSteeringMath.GetAccelerationInput(currentSpeed, activeTargetSpeed);
+            float brakeTorque = currentSpeed > activeTargetSpeed ? speedLimitBrakeTorque : 0f;
 
-            if (!loopLane && reachedEnd && closestDistance >= lane.Length - lookAheadDistance)
+            if (!loopLane && reachedEnd && closestDistance >= laneLength - lookAheadDistance)
             {
                 throttle = 0f;
                 brakeTorque = stopBrakeTorque;
             }
 
             ApplyDrive(throttle * maxMotorTorque, brakeTorque, currentSteerAngle);
+        }
+
+        private void TrySwitchToNextLane(ref float closestDistance)
+        {
+            if (trafficNetwork == null || loopLane || !trafficNetwork.IsValidLaneIndex(currentLaneIndex))
+            {
+                return;
+            }
+
+            float laneLength = trafficNetwork.GetLaneLength(currentLaneIndex);
+            if (laneLength <= 0.0001f || closestDistance < laneLength - laneSwitchDistance)
+            {
+                return;
+            }
+
+            int nextLaneIndex = trafficNetwork.SelectNextLaneIndex(currentLaneIndex, Random.value);
+            if (!trafficNetwork.IsValidLaneIndex(nextLaneIndex))
+            {
+                return;
+            }
+
+            currentLaneIndex = nextLaneIndex;
+            closestDistance = trafficNetwork.FindClosestDistance(currentLaneIndex, transform.position, closestPointSamples);
+
+            if (debugSetup)
+            {
+                Debug.Log($"NPC car '{name}' switched to traffic lane index {currentLaneIndex}.", this);
+            }
+        }
+
+        private void ResolveTrafficNetwork()
+        {
+            if (trafficNetwork == null)
+            {
+                trafficNetwork = TrafficNetwork.Active;
+            }
+        }
+
+        private void LogMissingTrafficNetworkOnce()
+        {
+            if (!debugSetup || missingNetworkWarningLogged)
+            {
+                return;
+            }
+
+            missingNetworkWarningLogged = true;
+            string reason = trafficNetwork == null
+                ? "No active TrafficNetwork was found in the scene."
+                : $"Traffic lane index {currentLaneIndex} is not valid on network '{trafficNetwork.name}'.";
+
+            Debug.LogWarning($"NPC car '{name}' cannot drive: {reason}", this);
         }
 
         private void LateUpdate()
@@ -162,13 +247,15 @@ namespace FriendOfOurs.Traffic
         [ContextMenu("Snap To Lane Start")]
         private void SnapToLaneStart()
         {
-            if (lane == null)
+            ResolveTrafficNetwork();
+
+            if (trafficNetwork == null || !trafficNetwork.IsValidLaneIndex(currentLaneIndex))
             {
                 return;
             }
 
-            transform.position = lane.GetPointAtDistance(0f);
-            Vector3 direction = lane.GetDirectionAtDistance(0f);
+            transform.position = trafficNetwork.GetPointAtDistance(currentLaneIndex, 0f);
+            Vector3 direction = trafficNetwork.GetDirectionAtDistance(currentLaneIndex, 0f);
             if (direction.sqrMagnitude > 0.0001f)
             {
                 transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
@@ -420,7 +507,7 @@ namespace FriendOfOurs.Traffic
             DrawWheelGizmo(rearLeftWheel);
             DrawWheelGizmo(rearRightWheel);
 
-            if (lane != null)
+            if (trafficNetwork != null && trafficNetwork.IsValidLaneIndex(currentLaneIndex))
             {
                 Gizmos.color = Color.magenta;
                 Gizmos.DrawSphere(lastTargetPoint, 0.35f);
