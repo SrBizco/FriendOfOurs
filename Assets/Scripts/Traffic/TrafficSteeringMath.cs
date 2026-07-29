@@ -27,5 +27,27 @@ namespace FriendOfOurs.Traffic
 
             return 1f;
         }
+
+        public static float GetBrakeTorque(
+            float currentSpeed,
+            float targetSpeed,
+            bool hasObstacle,
+            bool shouldStop,
+            float speedLimitBrakeTorque,
+            float obstacleBrakeTorque,
+            float stopBrakeTorque)
+        {
+            if (shouldStop || targetSpeed <= 0.01f)
+            {
+                return stopBrakeTorque;
+            }
+
+            if (currentSpeed <= targetSpeed)
+            {
+                return 0f;
+            }
+
+            return hasObstacle ? obstacleBrakeTorque : speedLimitBrakeTorque;
+        }
     }
 }

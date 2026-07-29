@@ -40,6 +40,14 @@ namespace FriendOfOurs.Traffic
         [SerializeField, Min(0f)] private float speedLimit = 8f;
         [SerializeField] private TrafficLaneConnection[] connections = Array.Empty<TrafficLaneConnection>();
 
+        public TrafficLaneData(string name, int splineIndex, float speedLimit, TrafficLaneConnection[] connections = null)
+        {
+            this.name = name;
+            this.splineIndex = Mathf.Max(0, splineIndex);
+            this.speedLimit = Mathf.Max(0f, speedLimit);
+            this.connections = connections ?? Array.Empty<TrafficLaneConnection>();
+        }
+
         public string Name => name;
         public int SplineIndex => splineIndex;
         public float SpeedLimit => speedLimit;
@@ -179,6 +187,47 @@ namespace FriendOfOurs.Traffic
             }
 
             return closestDistance;
+        }
+
+        public int FindClosestLaneIndex(Vector3 worldPosition, int sampleCount = 40, float maxDistance = float.PositiveInfinity)
+        {
+            if (lanes == null || lanes.Length == 0)
+            {
+                return -1;
+            }
+
+            sampleCount = Mathf.Max(2, sampleCount);
+            float closestSqrDistance = maxDistance >= 0f ? maxDistance * maxDistance : float.PositiveInfinity;
+            int closestLaneIndex = -1;
+
+            for (int laneIndex = 0; laneIndex < lanes.Length; laneIndex++)
+            {
+                if (!IsValidLaneIndex(laneIndex))
+                {
+                    continue;
+                }
+
+                float length = GetLaneLength(laneIndex);
+                if (length <= 0.0001f)
+                {
+                    continue;
+                }
+
+                int splineIndex = lanes[laneIndex].SplineIndex;
+                for (int i = 0; i < sampleCount; i++)
+                {
+                    float t = i / (sampleCount - 1f);
+                    Vector3 point = (Vector3)splineContainer.EvaluatePosition(splineIndex, t);
+                    float sqrDistance = (point - worldPosition).sqrMagnitude;
+                    if (sqrDistance < closestSqrDistance)
+                    {
+                        closestSqrDistance = sqrDistance;
+                        closestLaneIndex = laneIndex;
+                    }
+                }
+            }
+
+            return closestLaneIndex;
         }
 
         public int SelectNextLaneIndex(int laneIndex, float roll)

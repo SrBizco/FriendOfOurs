@@ -3,6 +3,7 @@ using UnityEngine;
 namespace FriendOfOurs.Traffic
 {
     [RequireComponent(typeof(Rigidbody))]
+    [RequireComponent(typeof(VehicleObstacleSensor))]
     public sealed class NpcCarController : MonoBehaviour
     {
         [Header("Route")]
@@ -11,18 +12,24 @@ namespace FriendOfOurs.Traffic
         [SerializeField, Min(0.5f)] private float lookAheadDistance = 6f;
         [SerializeField, Min(0.1f)] private float laneSwitchDistance = 3f;
         [SerializeField, Min(2)] private int closestPointSamples = 48;
+        [SerializeField] private bool autoDetectStartingLane = true;
+        [SerializeField, Min(0f)] private float maxStartingLaneDetectionDistance = 8f;
         [SerializeField] private bool loopLane;
 
         [Header("Driving")]
         [SerializeField, Min(0f)] private float targetSpeed = 8f;
         [SerializeField, Min(0f)] private float maxMotorTorque = 900f;
         [SerializeField, Min(0f)] private float speedLimitBrakeTorque = 120f;
+        [SerializeField, Min(0f)] private float obstacleBrakeTorque = 650f;
         [SerializeField, Min(0f)] private float stopBrakeTorque = 1600f;
         [SerializeField, Min(0f)] private float maxSteerAngle = 32f;
         [SerializeField, Min(0f)] private float steerResponse = 120f;
         [SerializeField, Min(0f)] private float startupSettleTime = 0.35f;
         [SerializeField] private bool frontWheelDrive;
         [SerializeField] private bool rearWheelDrive = true;
+
+        [Header("Traffic Awareness")]
+        [SerializeField] private VehicleObstacleSensor obstacleSensor;
 
         [Header("Wheel Colliders")]
         [SerializeField] private WheelCollider frontLeftWheel;
@@ -40,6 +47,7 @@ namespace FriendOfOurs.Traffic
         [SerializeField] private bool debugSetup;
         [SerializeField] private bool disableDrivingForDebug;
         [SerializeField] private bool drawDebugGizmos = true;
+        [SerializeField] private bool debugWheelGrounding;
         [SerializeField, Min(0.1f)] private float groundedDebugInterval = 1f;
         [SerializeField, Min(0f)] private float groundProbeExtraDistance = 0.25f;
 
@@ -50,10 +58,22 @@ namespace FriendOfOurs.Traffic
         private float startupEndTime;
         private bool originalUseGravity;
         private bool missingNetworkWarningLogged;
+        private bool routeInitializedExplicitly;
+        private bool startingLaneDetected;
 
         private void Awake()
         {
             body = GetComponent<Rigidbody>();
+            if (obstacleSensor == null)
+            {
+                obstacleSensor = GetComponent<VehicleObstacleSensor>();
+            }
+
+            if (obstacleSensor == null)
+            {
+                obstacleSensor = gameObject.AddComponent<VehicleObstacleSensor>();
+            }
+
             if (body != null)
             {
                 originalUseGravity = body.useGravity;
@@ -73,11 +93,13 @@ namespace FriendOfOurs.Traffic
         private void Start()
         {
             ResolveTrafficNetwork();
+            TryAutoDetectStartingLane();
         }
 
         private void Reset()
         {
             body = GetComponent<Rigidbody>();
+            obstacleSensor = GetComponent<VehicleObstacleSensor>();
         }
 
         public void InitializeTrafficRoute(TrafficNetwork network, int laneIndex)
@@ -86,6 +108,8 @@ namespace FriendOfOurs.Traffic
             currentLaneIndex = Mathf.Max(0, laneIndex);
             currentSteerAngle = 0f;
             missingNetworkWarningLogged = false;
+            routeInitializedExplicitly = true;
+            startingLaneDetected = true;
 
             lastTargetPoint = trafficNetwork != null && trafficNetwork.IsValidLaneIndex(currentLaneIndex)
                 ? trafficNetwork.GetPointAtDistance(currentLaneIndex, 0f)
@@ -96,6 +120,7 @@ namespace FriendOfOurs.Traffic
         {
             LogGroundedState();
             ResolveTrafficNetwork();
+            TryAutoDetectStartingLane();
 
             if (IsSettlingAtStartup())
             {
@@ -153,8 +178,20 @@ namespace FriendOfOurs.Traffic
             float currentSpeed = body != null ? body.velocity.magnitude : 0f;
             float laneSpeedLimit = trafficNetwork.GetLaneSpeedLimit(currentLaneIndex);
             float activeTargetSpeed = laneSpeedLimit > 0f ? Mathf.Min(targetSpeed, laneSpeedLimit) : targetSpeed;
+            TrafficObstacleResponse obstacleResponse = obstacleSensor != null
+                ? obstacleSensor.Scan()
+                : TrafficObstacleResponse.Clear;
+            activeTargetSpeed *= obstacleResponse.SpeedFactor;
+
             float throttle = TrafficSteeringMath.GetAccelerationInput(currentSpeed, activeTargetSpeed);
-            float brakeTorque = currentSpeed > activeTargetSpeed ? speedLimitBrakeTorque : 0f;
+            float brakeTorque = TrafficSteeringMath.GetBrakeTorque(
+                currentSpeed,
+                activeTargetSpeed,
+                obstacleResponse.HasObstacle,
+                obstacleResponse.ShouldStop,
+                speedLimitBrakeTorque,
+                obstacleBrakeTorque,
+                stopBrakeTorque);
 
             if (!loopLane && reachedEnd && closestDistance >= laneLength - lookAheadDistance)
             {
@@ -198,6 +235,32 @@ namespace FriendOfOurs.Traffic
             if (trafficNetwork == null)
             {
                 trafficNetwork = TrafficNetwork.Active;
+            }
+        }
+
+        private void TryAutoDetectStartingLane()
+        {
+            if (!autoDetectStartingLane || routeInitializedExplicitly || startingLaneDetected || trafficNetwork == null)
+            {
+                return;
+            }
+
+            int detectedLaneIndex = trafficNetwork.FindClosestLaneIndex(
+                transform.position,
+                closestPointSamples,
+                maxStartingLaneDetectionDistance);
+            if (!trafficNetwork.IsValidLaneIndex(detectedLaneIndex))
+            {
+                return;
+            }
+
+            currentLaneIndex = detectedLaneIndex;
+            startingLaneDetected = true;
+            missingNetworkWarningLogged = false;
+
+            if (debugSetup)
+            {
+                Debug.Log($"NPC car '{name}' detected starting traffic lane index {currentLaneIndex}.", this);
             }
         }
 
@@ -378,7 +441,7 @@ namespace FriendOfOurs.Traffic
 
         private void LogGroundedState()
         {
-            if (!debugSetup || Time.time < nextGroundedDebugTime)
+            if (!debugWheelGrounding || Time.time < nextGroundedDebugTime)
             {
                 return;
             }
