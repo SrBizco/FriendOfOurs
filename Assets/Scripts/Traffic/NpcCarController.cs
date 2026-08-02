@@ -6,6 +6,8 @@ namespace FriendOfOurs.Traffic
     [RequireComponent(typeof(VehicleObstacleSensor))]
     public sealed class NpcCarController : MonoBehaviour
     {
+        private const float RoadDetectionRetryDelay = 0.5f;
+
         [Header("Route")]
         [SerializeField] private TrafficNetwork trafficNetwork;
         [SerializeField, Min(0.5f)] private float lookAheadDistance = 7f;
@@ -48,7 +50,6 @@ namespace FriendOfOurs.Traffic
         [SerializeField, Min(0f)] private float playerGripChangeSpeed = 5f;
         [SerializeField, Min(0f)] private float playerLateralGripAssist = 1.5f;
         [SerializeField, Min(0f)] private float playerNormalYawAssist = 1.2f;
-        [SerializeField, Min(0f)] private float playerArcadeTurnMultiplier = 2.2f;
         [SerializeField, Min(0.1f)] private float playerTurnAssistFalloffSpeed = 18f;
         [SerializeField, Min(0f)] private float playerDriftYawAssist = 3f;
 
@@ -73,6 +74,7 @@ namespace FriendOfOurs.Traffic
 
         private Rigidbody body;
         private TrafficPath activePath;
+        private float activePathLength = 0.1f;
         private int currentEdgeIndex = -1;
         private int pendingEdgeIndex = -1;
         private bool isTurning;
@@ -91,6 +93,7 @@ namespace FriendOfOurs.Traffic
         private WheelFrictionCurve rearLeftBaseSidewaysFriction;
         private WheelFrictionCurve rearRightBaseSidewaysFriction;
         private float currentSteerAngle;
+        private float nextRoadDetectionTime;
         private Vector3 lastTargetPoint;
         private TrafficCarSpawner trafficSpawnerOwner;
 
@@ -133,7 +136,7 @@ namespace FriendOfOurs.Traffic
             routeInitialized = trafficNetwork != null && trafficNetwork.IsValidEdgeIndex(edgeIndex);
             if (routeInitialized)
             {
-                activePath = trafficNetwork.GetRoadPath(currentEdgeIndex);
+                SetActivePath(trafficNetwork.GetRoadPath(currentEdgeIndex));
                 Vector3 forward = activePath.GetDirection(0f);
                 lastTargetPoint = activePath.Evaluate(0f);
                 transform.rotation = Quaternion.LookRotation(forward, Vector3.up);
@@ -239,6 +242,11 @@ namespace FriendOfOurs.Traffic
                 return;
             }
 
+            if (isDecorativeVehicle)
+            {
+                return;
+            }
+
             if (disableNpcDriving)
             {
                 ApplyDrive(0f, stopBrakeTorque, 0f);
@@ -252,7 +260,7 @@ namespace FriendOfOurs.Traffic
                 return;
             }
 
-            float pathLength = Mathf.Max(0.1f, activePath.Length);
+            float pathLength = activePathLength;
             float closestT = activePath.FindClosestT(transform.position, pathSamples);
             // Change to the intersection curve before reaching the end of the road segment.
             // Waiting until the bumper reaches the end makes a WheelCollider vehicle drive straight through the junction.
@@ -260,7 +268,7 @@ namespace FriendOfOurs.Traffic
             if (closestT >= turnPreparationT)
             {
                 AdvanceRoute();
-                pathLength = Mathf.Max(0.1f, activePath.Length);
+                pathLength = activePathLength;
                 closestT = activePath.FindClosestT(transform.position, pathSamples);
             }
 
@@ -313,7 +321,8 @@ namespace FriendOfOurs.Traffic
                     float falloffT = Mathf.InverseLerp(playerAccelerationFalloffStart, 1f, speedRatio);
                     float accelerationFactor = Mathf.Lerp(1f, playerTopSpeedAccelerationFactor, falloffT);
                     motorTorque = playerThrottleInput * playerMotorTorque * accelerationFactor;
-                    body.AddForce(transform.forward * playerThrottleInput * playerArcadeAcceleration * accelerationFactor,
+                    float launchAssist = 1f - Mathf.InverseLerp(2f, 7f, Mathf.Max(0f, forwardSpeed));
+                    body.AddForce(transform.forward * playerThrottleInput * playerArcadeAcceleration * launchAssist,
                         ForceMode.Acceleration);
                 }
             }
@@ -350,7 +359,7 @@ namespace FriendOfOurs.Traffic
                         playerTurnAssistFalloffSpeed * 0.65f,
                         playerTurnAssistFalloffSpeed,
                         Mathf.Abs(forwardSpeed));
-                    float yawAssist = playerNormalYawAssist * playerArcadeTurnMultiplier * speedAssist;
+                    float yawAssist = playerNormalYawAssist * 0.35f * speedAssist;
                     body.AddTorque(Vector3.up * turnDirection * yawAssist, ForceMode.Acceleration);
                     body.AddForce(-transform.right * lateralSpeed * playerLateralGripAssist, ForceMode.Acceleration);
                 }
@@ -421,11 +430,14 @@ namespace FriendOfOurs.Traffic
             if (trafficNetwork == null) trafficNetwork = TrafficNetwork.Active;
             if (routeInitialized || trafficNetwork == null) return;
             if (!autoDetectStartingRoad) return;
+            if (Time.time < nextRoadDetectionTime) return;
+
+            nextRoadDetectionTime = Time.time + RoadDetectionRetryDelay;
 
             if (trafficNetwork.TryFindClosestEdge(transform.position, transform.forward, maxStartingRoadDetectionDistance, out int edgeIndex))
             {
                 currentEdgeIndex = edgeIndex;
-                activePath = trafficNetwork.GetRoadPath(edgeIndex);
+                SetActivePath(trafficNetwork.GetRoadPath(edgeIndex));
                 routeInitialized = true;
             }
         }
@@ -440,15 +452,21 @@ namespace FriendOfOurs.Traffic
                     return;
                 }
 
-                activePath = trafficNetwork.GetTurnPath(currentEdgeIndex, pendingEdgeIndex);
+                SetActivePath(trafficNetwork.GetTurnPath(currentEdgeIndex, pendingEdgeIndex));
                 isTurning = true;
                 return;
             }
 
             currentEdgeIndex = pendingEdgeIndex;
             pendingEdgeIndex = -1;
-            activePath = trafficNetwork.GetRoadPath(currentEdgeIndex);
+            SetActivePath(trafficNetwork.GetRoadPath(currentEdgeIndex));
             isTurning = false;
+        }
+
+        private void SetActivePath(TrafficPath path)
+        {
+            activePath = path;
+            activePathLength = Mathf.Max(0.1f, path.Length);
         }
 
         private void LateUpdate()

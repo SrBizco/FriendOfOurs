@@ -17,12 +17,28 @@ namespace FriendOfOurs.Gameplay
         [SerializeField, Min(0f)] private float positionSmoothTime = 0.03f;
         [SerializeField, Min(0f)] private float rotationSmoothSpeed = 35f;
 
+        [Header("Vehicle follow")]
+        [SerializeField, Min(0f)] private float vehicleYawFollowSpeed = 8f;
+
         private Vector3 positionVelocity;
+        private Transform vehicleTarget;
 
         public Transform Target
         {
             get => target;
             set => target = value;
+        }
+
+        public void SetVehicleFollow(Transform vehicle)
+        {
+            vehicleTarget = vehicle;
+            target = vehicle;
+        }
+
+        public void ClearVehicleFollow(Transform onFootTarget)
+        {
+            vehicleTarget = null;
+            target = onFootTarget;
         }
 
         private void LateUpdate()
@@ -32,7 +48,14 @@ namespace FriendOfOurs.Gameplay
                 return;
             }
 
-            if (Input.GetMouseButton(1))
+            if (vehicleTarget != null)
+            {
+                yawDegrees = Mathf.LerpAngle(
+                    yawDegrees,
+                    vehicleTarget.eulerAngles.y,
+                    vehicleYawFollowSpeed * Time.deltaTime);
+            }
+            else if (Input.GetMouseButton(1))
             {
                 yawDegrees += Input.GetAxis("Mouse X") * mouseRotationSpeed;
             }

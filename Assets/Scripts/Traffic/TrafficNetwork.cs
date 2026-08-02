@@ -71,6 +71,18 @@ namespace FriendOfOurs.Traffic
 
         public float FindClosestT(Vector3 worldPosition, int samples = 24)
         {
+            if (!curved)
+            {
+                Vector3 segment = end - start;
+                float segmentLengthSquared = segment.sqrMagnitude;
+                if (segmentLengthSquared <= 0.0001f)
+                {
+                    return 0f;
+                }
+
+                return Mathf.Clamp01(Vector3.Dot(worldPosition - start, segment) / segmentLengthSquared);
+            }
+
             samples = Mathf.Max(2, samples);
             float bestT = 0f;
             float bestDistance = float.MaxValue;

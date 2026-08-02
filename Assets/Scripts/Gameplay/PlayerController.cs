@@ -101,7 +101,10 @@ namespace FriendOfOurs.Gameplay
             }
 
             moveInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
-            isSprinting = Input.GetKey(KeyCode.LeftShift);
+            if (Input.GetKeyDown(KeyCode.LeftShift))
+            {
+                isSprinting = !isSprinting;
+            }
             jumpRequested |= Input.GetButtonDown("Jump");
 
             Transform referenceTransform = cameraTransform != null ? cameraTransform : Camera.main != null ? Camera.main.transform : null;
@@ -182,12 +185,15 @@ namespace FriendOfOurs.Gameplay
             stateMachine.ChangeState(nextState);
         }
 
-        public void StopMovement()
+        public void StopMovement(bool resetSprint = true)
         {
             moveInput = Vector2.zero;
             moveDirection = Vector3.zero;
             jumpRequested = false;
-            isSprinting = false;
+            if (resetSprint)
+            {
+                isSprinting = false;
+            }
 
             if (body != null)
             {

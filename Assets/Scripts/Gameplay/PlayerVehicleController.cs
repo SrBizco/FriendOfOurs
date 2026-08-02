@@ -103,7 +103,7 @@ namespace FriendOfOurs.Gameplay
             activeVehicle = vehicle;
             SetPlayerDrivingState(true);
             activeVehicle.BeginPlayerControl();
-            if (cameraController != null) cameraController.Target = activeVehicle.transform;
+            cameraController?.SetVehicleFollow(activeVehicle.transform);
         }
 
         private void ExitVehicle()
@@ -116,7 +116,7 @@ namespace FriendOfOurs.Gameplay
             SetPlayerDrivingState(false);
             playerBody.position = exitPosition;
             playerBody.rotation = Quaternion.LookRotation(-vehicle.transform.right, Vector3.up);
-            if (cameraController != null) cameraController.Target = transform;
+            cameraController?.ClearVehicleFollow(transform);
             ScheduleAbandonedVehicle(vehicle);
         }
 
@@ -227,7 +227,7 @@ namespace FriendOfOurs.Gameplay
                 playerControllerWasEnabled = playerController != null && playerController.enabled;
                 combatControllerWasEnabled = combatController != null && combatController.enabled;
                 playerBodyWasKinematic = playerBody.isKinematic;
-                playerController?.StopMovement();
+                playerController?.StopMovement(false);
                 if (playerController != null) playerController.enabled = false;
                 if (combatController != null) combatController.enabled = false;
 
