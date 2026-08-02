@@ -9,6 +9,11 @@ namespace FriendOfOurs.Traffic
         [SerializeField, Min(0.1f)] private float slowDistance = 12f;
         [SerializeField, Min(0.05f)] private float castRadius = 1.1f;
         [SerializeField] private Vector3 localOrigin = new Vector3(0f, 0.8f, 2.2f);
+        [Header("Speed-based braking")]
+        [SerializeField, Min(0f)] private float reactionTime = 0.35f;
+        [SerializeField, Min(0.1f)] private float assumedBrakingDeceleration = 7f;
+        [SerializeField, Min(0f)] private float safetyGap = 1.5f;
+        [SerializeField, Min(0f)] private float slowDownTime = 1.25f;
         [SerializeField] private LayerMask obstacleLayers = Physics.DefaultRaycastLayers;
         [SerializeField] private QueryTriggerInteraction triggerInteraction = QueryTriggerInteraction.Ignore;
         [SerializeField] private bool detectOnlyNpcCars;
@@ -16,6 +21,12 @@ namespace FriendOfOurs.Traffic
 
         private readonly RaycastHit[] hits = new RaycastHit[12];
         private TrafficObstacleResponse lastResponse = TrafficObstacleResponse.Clear;
+        private Rigidbody vehicleBody;
+
+        private void Awake()
+        {
+            vehicleBody = GetComponent<Rigidbody>();
+        }
 
         public TrafficObstacleResponse Scan()
         {
@@ -47,11 +58,18 @@ namespace FriendOfOurs.Traffic
                 }
             }
 
+            float speed = vehicleBody != null ? vehicleBody.velocity.magnitude : 0f;
+            float speedBasedStopDistance = speed * reactionTime
+                + speed * speed / (2f * assumedBrakingDeceleration)
+                + safetyGap;
+            float effectiveStopDistance = Mathf.Max(stopDistance, speedBasedStopDistance);
+            float effectiveSlowDistance = Mathf.Max(slowDistance, effectiveStopDistance + speed * slowDownTime);
+
             lastResponse = TrafficObstacleResponse.Calculate(
                 hasObstacle,
                 closestDistance,
-                stopDistance,
-                Mathf.Min(slowDistance, detectionDistance));
+                effectiveStopDistance,
+                Mathf.Min(effectiveSlowDistance, detectionDistance));
 
             return lastResponse;
         }

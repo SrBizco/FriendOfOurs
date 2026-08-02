@@ -417,20 +417,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   trafficNetwork: {fileID: 0}
-  currentLaneIndex: 0
   lookAheadDistance: 6
-  laneSwitchDistance: 3
-  closestPointSamples: 48
-  autoDetectStartingLane: 1
-  maxStartingLaneDetectionDistance: 8
-  loopLane: 0
+  pathSamples: 28
+  autoDetectStartingRoad: 1
+  maxStartingRoadDetectionDistance: 9
   targetSpeed: 8
+  turnSpeed: 4.5
   maxMotorTorque: 900
   speedLimitBrakeTorque: 120
+  turnBrakeTorque: 800
+  obstacleBrakeTorque: 650
   stopBrakeTorque: 1600
+  emergencyBrakeTorque: 3000
   maxSteerAngle: 32
   steerResponse: 120
-  startupSettleTime: 0.35
   frontWheelDrive: 0
   rearWheelDrive: 1
   obstacleSensor: {fileID: 0}
@@ -442,12 +442,8 @@ MonoBehaviour:
   frontRightVisual: {fileID: 496012}
   rearLeftVisual: {fileID: 458360}
   rearRightVisual: {fileID: 492836}
-  debugSetup: 1
-  disableDrivingForDebug: 0
-  drawDebugGizmos: 1
-  debugWheelGrounding: 0
-  groundedDebugInterval: 1
-  groundProbeExtraDistance: 0.25
+  drawDebugGizmos: 0
+  disableNpcDriving: 0
 --- !u!114 &6618431573312872199
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -460,17 +456,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1fda0f41a8a74af9ba98ae4d777e19c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  detectionDistance: 2
+  detectionDistance: 10
   stopDistance: 1.5
   slowDistance: 4
   castRadius: 0.7
   localOrigin: {x: 0, y: 0.7, z: 1.5}
+  reactionTime: 0.35
+  assumedBrakingDeceleration: 7
+  safetyGap: 1.5
+  slowDownTime: 1.25
   obstacleLayers:
     serializedVersion: 2
     m_Bits: 640
   triggerInteraction: 1
-  onlyDetectVehicles: 1
-  drawDebugGizmos: 1
+  detectOnlyNpcCars: 0
+  drawDebugGizmos: 0
 --- !u!1 &135354
 GameObject:
   m_ObjectHideFlags: 0
