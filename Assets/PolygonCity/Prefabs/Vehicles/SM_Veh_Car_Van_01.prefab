@@ -185,6 +185,7 @@ GameObject:
   - component: {fileID: 2804163782660293412}
   - component: {fileID: 8864201800679849098}
   - component: {fileID: 760657349084859485}
+  - component: {fileID: -7183200603214525611}
   m_Layer: 9
   m_Name: SM_Veh_Car_Van_01
   m_TagString: Untagged
@@ -388,6 +389,34 @@ MonoBehaviour:
   rearRightVisual: {fileID: 474922}
   drawDebugGizmos: 0
   disableNpcDriving: 0
+--- !u!114 &-7183200603214525611
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 130278}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 028ba41094d3f524daf2592e21bbdebe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  colorMaterials:
+  - {fileID: 2100000, guid: 62e25ef75a2216f418d06453c9ad15cb, type: 2}
+  - {fileID: 2100000, guid: a8e32d2cd442e564aa46c99f0ae7c0c8, type: 2}
+  - {fileID: 2100000, guid: c01b7c8cb1175b54aab24b670c2d58dd, type: 2}
+  - {fileID: 2100000, guid: 49ef76ea47782eb4b93ac08b234fd6c3, type: 2}
+  - {fileID: 2100000, guid: ee26ded8aeae32044836748251f93891, type: 2}
+  - {fileID: 2100000, guid: f145fd98abc7a354f83c3a2e8df80a75, type: 2}
+  - {fileID: 2100000, guid: 97942cb5527e6f24eb8b8f5c86f8744d, type: 2}
+  - {fileID: 2100000, guid: ae4870cba172f524491e4431ce936a9d, type: 2}
+  - {fileID: 2100000, guid: ac4517348fefb604bbf10afeb378a491, type: 2}
+  - {fileID: 2100000, guid: ee5d59fcc8497a641905c26644c20880, type: 2}
+  - {fileID: 2100000, guid: 912f300affe60c543ac3ac40ef980902, type: 2}
+  - {fileID: 2100000, guid: bb694a94be4a3c64ca9ef44c62415782, type: 2}
+  bodyMaterialTargets:
+  - renderer: {fileID: 2369120}
+    materialSlot: 0
 --- !u!1 &148594
 GameObject:
   m_ObjectHideFlags: 0
