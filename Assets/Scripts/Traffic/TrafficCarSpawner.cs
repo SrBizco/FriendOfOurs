@@ -83,8 +83,20 @@ namespace FriendOfOurs.Traffic
             }
 
             car.transform.SetPositionAndRotation(pose.position, pose.rotation);
+            car.SetTrafficSpawnerOwner(this);
             car.InitializeTrafficRoute(trafficNetwork, edgeIndex);
             car.gameObject.SetActive(true);
+        }
+
+        public bool TryRecyclePlayerVehicle(NpcCarController car)
+        {
+            if (car == null || !cars.Contains(car))
+            {
+                return false;
+            }
+
+            car.gameObject.SetActive(false);
+            return true;
         }
 
         private void RecycleDistantCars()

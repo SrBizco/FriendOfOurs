@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 650543331586251986}
   - component: {fileID: 4888098869027812447}
   - component: {fileID: 320902404002171998}
+  - component: {fileID: 5386210134342658250}
   m_Layer: 7
   m_Name: Player
   m_TagString: Untagged
@@ -127,9 +128,15 @@ MonoBehaviour:
   animator: {fileID: 327968291040427150}
   combatLayerName: CombatUpperBody
   combatLayerBlendSpeed: 10
+  hitReactionLayerName: HitReactionUpperBody
+  hitReactionLayerBlendSpeed: 16
+  hitReactionLayerHoldTime: 0.45
   punchTrigger: Punch
   leftHookTrigger: LeftHook
   rightHookTrigger: RightHook
+  hitTrigger: Hit
+  deathTrigger: Death
+  debugAnimatorParameters: 0
 --- !u!114 &4888098869027812447
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -169,6 +176,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 100
+--- !u!114 &5386210134342658250
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7457107678001931164}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 268586e2e5f9f4a41a271f13feeb17c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  interactKey: 101
+  interactionRadius: 3
+  leftDoorDistance: 2.2
+  vehicleLayers:
+    serializedVersion: 2
+    m_Bits: 512
+  playerController: {fileID: 2622129726310020680}
+  combatController: {fileID: 4888098869027812447}
+  cameraController: {fileID: 0}
 --- !u!1001 &423026831510148086
 PrefabInstance:
   m_ObjectHideFlags: 0
