@@ -34,7 +34,7 @@ namespace FriendOfOurs.NPCs
             }
 
             float distance = controller.DistanceToThreat();
-            if (distance > controller.CombatGiveUpDistance)
+            if (distance > controller.CombatGiveUpDistance && !controller.HasPersistentCombatTarget)
             {
                 controller.EnterFleeState();
                 return;

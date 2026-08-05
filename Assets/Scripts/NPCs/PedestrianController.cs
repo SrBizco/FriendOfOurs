@@ -87,11 +87,13 @@ namespace FriendOfOurs.NPCs
         private float deathTime;
         private Transform threat;
         private ThreatReaction threatReaction;
+        private bool persistentCombatTarget;
         private AttackComboCounter attackComboCounter;
         private readonly Collider[] combatHits = new Collider[8];
 
         public bool IsAgentReady => agent != null && agent.enabled && agent.isOnNavMesh;
         public bool HasThreat => threat != null;
+        public bool HasPersistentCombatTarget => persistentCombatTarget;
         public float WalkSpeed => walkSpeed;
         public float MinimumFleeDuration => minimumFleeDuration;
         public float FleeSafeDistance => fleeSafeDistance;
@@ -144,6 +146,7 @@ namespace FriendOfOurs.NPCs
             agent.Warp(position);
             threat = null;
             threatReaction = ThreatReaction.None;
+            persistentCombatTarget = false;
             deathTime = 0f;
             attackAnimationLockEndTime = 0f;
             hitReactionLayerReleaseTime = 0f;
@@ -327,8 +330,41 @@ namespace FriendOfOurs.NPCs
         {
             threat = null;
             threatReaction = ThreatReaction.None;
+            persistentCombatTarget = false;
             attackAnimationLockEndTime = 0f;
             SetCombatLayerActive(false);
+        }
+
+        public void SetPersistentCombatTarget(Transform target)
+        {
+            if (target == null || IsDead)
+            {
+                return;
+            }
+
+            bool targetChanged = threat != target;
+            threat = target;
+            threatReaction = ThreatReaction.Combat;
+            persistentCombatTarget = true;
+
+            if (targetChanged || stateMachine.CurrentState != combatState)
+            {
+                EnterCombatState();
+            }
+        }
+
+        public void ReleasePersistentCombatTarget()
+        {
+            if (!persistentCombatTarget)
+            {
+                return;
+            }
+
+            ClearThreat();
+            if (!IsDead && IsAgentReady)
+            {
+                EnterWanderState();
+            }
         }
 
         public bool TryFleeFromThreat()
@@ -795,6 +831,7 @@ namespace FriendOfOurs.NPCs
             {
                 threat = attacker;
                 threatReaction = ThreatReaction.None;
+                persistentCombatTarget = false;
             }
 
             if (threatReaction == ThreatReaction.None)
@@ -822,6 +859,7 @@ namespace FriendOfOurs.NPCs
             if (wallet != null)
             {
                 wallet.AddMoney(UnityEngine.Random.Range(10, 51));
+                WantedSystem.Active?.ReportMurder(wallet.transform);
             }
 
             threat = damageInfo.Attacker != null ? damageInfo.Attacker.transform : null;

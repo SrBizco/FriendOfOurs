@@ -140,13 +140,18 @@ MonoBehaviour:
   rightHookTrigger: RightHook
   combatLayerName: CombatUpperBody
   combatLayerBlendSpeed: 10
+  hitReactionLayerName: HitReactionUpperBody
+  hitReactionLayerBlendSpeed: 16
+  hitReactionLayerHoldTime: 0.45
   walkAnimationSpeed: 0.5
   fleeAnimationSpeed: 1
   combatAnimationSpeed: 1
   comboResetTime: 1.1
   attackAnimationLockTime: 0.65
   fightBackChance: 0.2
-  fleeDuration: 6
+  minimumFleeDuration: 2
+  fleeSafeDistance: 20
+  fleeRepathInterval: 0.75
   fleeDistance: 12
   combatAttackRange: 1.25
   combatAttackRadius: 0.75
@@ -159,7 +164,7 @@ MonoBehaviour:
   combatHitLayers:
     serializedVersion: 2
     m_Bits: 128
-  debugCombat: 1
+  debugCombat: 0
 --- !u!114 &-2118926626754685392
 MonoBehaviour:
   m_ObjectHideFlags: 0
