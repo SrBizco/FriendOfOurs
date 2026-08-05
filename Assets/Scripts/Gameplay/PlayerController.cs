@@ -11,6 +11,11 @@ namespace FriendOfOurs.Gameplay
         [SerializeField, Min(0f)] private float rotationSpeed = 720f;
         [SerializeField] private Transform cameraTransform;
 
+        [Header("Slope Limit")]
+        [SerializeField, Range(0f, 89f)] private float maxSlopeAngle = 40f;
+        [SerializeField, Min(0.1f)] private float slopeProbeForwardDistance = 0.9f;
+        [SerializeField, Min(0.1f)] private float slopeProbeHeight = 2f;
+
         [Header("Jump")]
         [SerializeField, Min(0)] private int maxConsecutiveJumps = 1;
         [SerializeField, Min(0f)] private float jumpForce = 6f;
@@ -141,6 +146,12 @@ namespace FriendOfOurs.Gameplay
                 return;
             }
 
+            if (stateMachine.CurrentState == JumpState)
+            {
+                ApplyJumpImpulse();
+                return;
+            }
+
             ChangeState(JumpState);
         }
 
@@ -159,6 +170,11 @@ namespace FriendOfOurs.Gameplay
 
         public void ApplyHorizontalMovement()
         {
+            if (!CanMoveInDirection(moveDirection))
+            {
+                return;
+            }
+
             float currentSpeed = isSprinting ? runSpeed : walkSpeed;
             Vector3 nextPosition = body.position + moveDirection * (currentSpeed * Time.fixedDeltaTime);
             body.MovePosition(nextPosition);
@@ -252,6 +268,45 @@ namespace FriendOfOurs.Gameplay
             }
 
             return transform.position + Vector3.down * groundCheckRadius;
+        }
+
+        private bool CanMoveInDirection(Vector3 direction)
+        {
+            if (direction.sqrMagnitude <= 0.0001f || maxSlopeAngle >= 89f)
+            {
+                return true;
+            }
+
+            Vector3 normalizedDirection = direction.normalized;
+            Vector3 probeOrigin = body.position
+                + Vector3.up * slopeProbeHeight
+                + normalizedDirection * slopeProbeForwardDistance;
+
+            float probeDistance = slopeProbeHeight + slopeProbeForwardDistance + groundCheckRadius;
+            if (!Physics.Raycast(
+                    probeOrigin,
+                    Vector3.down,
+                    out RaycastHit groundHit,
+                    probeDistance,
+                    groundLayers,
+                    QueryTriggerInteraction.Ignore))
+            {
+                return true;
+            }
+
+            float slopeAngle = Vector3.Angle(groundHit.normal, Vector3.up);
+            if (slopeAngle <= maxSlopeAngle)
+            {
+                return true;
+            }
+
+            Vector3 uphillDirection = Vector3.ProjectOnPlane(Vector3.up, groundHit.normal);
+            if (uphillDirection.sqrMagnitude <= 0.0001f)
+            {
+                return true;
+            }
+
+            return Vector3.Dot(normalizedDirection, uphillDirection.normalized) <= 0.01f;
         }
 
         private void UpdateAnimation()

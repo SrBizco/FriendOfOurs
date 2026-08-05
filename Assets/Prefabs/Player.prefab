@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 4888098869027812447}
   - component: {fileID: 320902404002171998}
   - component: {fileID: 5386210134342658250}
+  - component: {fileID: 7269336779455354661}
   m_Layer: 7
   m_Name: Player
   m_TagString: Untagged
@@ -105,6 +106,9 @@ MonoBehaviour:
   runSpeed: 7
   rotationSpeed: 720
   cameraTransform: {fileID: 0}
+  maxSlopeAngle: 40
+  slopeProbeForwardDistance: 0.9
+  slopeProbeHeight: 2
   maxConsecutiveJumps: 1
   jumpForce: 6
   groundCheckRadius: 0.25
@@ -194,8 +198,36 @@ MonoBehaviour:
   vehicleLayers:
     serializedVersion: 2
     m_Bits: 512
+  visibleRecycleDelay: 120
+  immediateRecycleDistance: 90
+  cameraMargin: 0.08
   playerController: {fileID: 2622129726310020680}
   combatController: {fileID: 4888098869027812447}
+  cameraController: {fileID: 0}
+--- !u!114 &7269336779455354661
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7457107678001931164}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d8be847de104814aaf1e44ce44cd1ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  possessKey: 102
+  releaseKey: 103
+  interactionRadius: 2.5
+  propLayers:
+    serializedVersion: 2
+    m_Bits: 1024
+  moveSpeed: 4
+  rotationSpeed: 540
+  collisionSkin: 0.03
+  playerController: {fileID: 2622129726310020680}
+  combatController: {fileID: 4888098869027812447}
+  vehicleController: {fileID: 5386210134342658250}
   cameraController: {fileID: 0}
 --- !u!1001 &423026831510148086
 PrefabInstance:

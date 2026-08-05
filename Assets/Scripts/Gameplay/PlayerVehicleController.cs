@@ -36,6 +36,8 @@ namespace FriendOfOurs.Gameplay
         private NpcCarController activeVehicle;
         private readonly List<AbandonedVehicle> abandonedVehicles = new List<AbandonedVehicle>();
 
+        public bool IsDriving => activeVehicle != null;
+
         private sealed class AbandonedVehicle
         {
             public NpcCarController Vehicle;
