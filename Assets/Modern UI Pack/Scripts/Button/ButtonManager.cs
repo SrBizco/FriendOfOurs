@@ -311,6 +311,10 @@ namespace Michsky.MUIP
             // Invoke click actions
             onClick.Invoke();
 
+            // A click callback can hide this button together with its parent panel.
+            // Coroutines cannot be started from an inactive GameObject.
+            if (isActiveAndEnabled == false) { return; }
+
             // Check for double click
             if (checkForDoubleClick == false) { return; }
             if (waitingForDoubleClickInput == true)

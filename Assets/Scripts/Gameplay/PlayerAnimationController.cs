@@ -98,6 +98,20 @@ namespace FriendOfOurs.Gameplay
             animator.SetTrigger(deathHash);
         }
 
+        public void ResetForRespawn()
+        {
+            if (animator == null)
+            {
+                return;
+            }
+
+            targetCombatLayerWeight = 0f;
+            hitReactionLayerReleaseTime = 0f;
+            SetHitReactionLayerActive(false, true);
+            animator.Rebind();
+            animator.Update(0f);
+        }
+
         public void PlayHitReaction()
         {
             if (animator == null)

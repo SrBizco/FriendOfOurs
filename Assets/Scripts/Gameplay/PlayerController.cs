@@ -44,6 +44,7 @@ namespace FriendOfOurs.Gameplay
         public PlayerMoveState MoveState { get; private set; }
         public PlayerJumpState JumpState { get; private set; }
         public PlayerDeadState DeadState { get; private set; }
+        public bool IsDead => isDead;
         public bool HasMoveInput => moveDirection.sqrMagnitude > 0.0001f;
         public bool IsGrounded => isGrounded;
         public bool CanFinishJump => isGrounded && body.velocity.y <= 0.1f;
@@ -221,6 +222,28 @@ namespace FriendOfOurs.Gameplay
         public void PlayDeathAnimation()
         {
             animationController?.PlayDeath();
+        }
+
+        public bool RespawnAt(Transform respawnPoint)
+        {
+            if (respawnPoint == null || health == null)
+            {
+                return false;
+            }
+
+            StopMovement();
+            body.position = respawnPoint.position;
+            body.rotation = respawnPoint.rotation;
+            body.velocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+            health.ResetHealth();
+            jumpCounter.Reset(maxConsecutiveJumps);
+            isDead = false;
+            isGrounded = false;
+            wasGrounded = false;
+            animationController?.ResetForRespawn();
+            ChangeState(IdleState);
+            return true;
         }
 
         private void UpdateGroundedState()
