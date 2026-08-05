@@ -1,4 +1,5 @@
 using UnityEngine;
+using FriendOfOurs.Audio;
 
 namespace FriendOfOurs.Traffic
 {
@@ -96,6 +97,7 @@ namespace FriendOfOurs.Traffic
         private float nextRoadDetectionTime;
         private Vector3 lastTargetPoint;
         private TrafficCarSpawner trafficSpawnerOwner;
+        private AudioSource engineAudioSource;
 
         public bool IsPlayerControlled => isPlayerControlled;
         public bool IsDecorativeVehicle => isDecorativeVehicle;
@@ -113,6 +115,14 @@ namespace FriendOfOurs.Traffic
 
         private void OnEnable()
         {
+        }
+
+        private void OnDisable()
+        {
+            if (engineAudioSource != null && engineAudioSource.isPlaying)
+            {
+                engineAudioSource.Stop();
+            }
         }
 
         public void InitializeTrafficRoute(TrafficNetwork network, int edgeIndex)
@@ -475,6 +485,24 @@ namespace FriendOfOurs.Traffic
             UpdateWheelVisual(frontRightWheel, frontRightVisual);
             UpdateWheelVisual(rearLeftWheel, rearLeftVisual);
             UpdateWheelVisual(rearRightWheel, rearRightVisual);
+            UpdateEngineAudio();
+        }
+
+        private void UpdateEngineAudio()
+        {
+            TrafficAudioSystem audioSystem = TrafficAudioSystem.Active;
+            if (audioSystem == null)
+            {
+                return;
+            }
+
+            if (engineAudioSource == null)
+            {
+                engineAudioSource = audioSystem.CreateEngineSource(gameObject);
+            }
+
+            float speed = body != null ? body.velocity.magnitude : 0f;
+            audioSystem.UpdateEngineSource(engineAudioSource, speed, !isDecorativeVehicle && speed > 0.1f);
         }
 
         private void ApplyDrive(float motorTorque, float brakeTorque, float steerAngle)

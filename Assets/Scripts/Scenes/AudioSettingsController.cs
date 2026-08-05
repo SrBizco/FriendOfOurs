@@ -10,7 +10,7 @@ namespace FriendOfOurs.Scenes
         [SerializeField] private AudioMixer audioMixer;
         [SerializeField] private string masterParameter = "MasterVolume";
         [SerializeField] private string musicParameter = "MusicVolume";
-        [SerializeField] private string sfxParameter = "SfxVolume";
+        [SerializeField] private string sfxParameter = "SFXVolume";
         [SerializeField, Min(0.01f)] private float sliderMaximumValue = 100f;
         [SerializeField, Range(-80f, 0f)] private float minimumDecibels = -80f;
         [Header("Optional UI Sliders")]
@@ -25,6 +25,17 @@ namespace FriendOfOurs.Scenes
 
         private void Awake()
         {
+            // The mixer exposes SFXVolume. Keep older scenes that serialized the
+            // previous spelling working without requiring a manual migration.
+            if (sfxParameter == "SfxVolume")
+            {
+                sfxParameter = "SFXVolume";
+            }
+
+            ConfigureSlider(masterSlider);
+            ConfigureSlider(musicSlider);
+            ConfigureSlider(sfxSlider);
+
             if (!hasRuntimeValues)
             {
                 masterValue = ReadVolume(masterParameter);
@@ -35,6 +46,16 @@ namespace FriendOfOurs.Scenes
 
             ApplyRuntimeValues();
             RefreshSliders();
+        }
+
+        private void OnEnable()
+        {
+            SubscribeSliders();
+        }
+
+        private void OnDisable()
+        {
+            UnsubscribeSliders();
         }
 
         public void SetMasterVolume(float normalizedValue)
@@ -102,6 +123,31 @@ namespace FriendOfOurs.Scenes
         private float ClampSliderValue(float value)
         {
             return Mathf.Clamp(value, 0f, sliderMaximumValue);
+        }
+
+        private void SubscribeSliders()
+        {
+            if (masterSlider != null) masterSlider.onValueChanged.AddListener(SetMasterVolume);
+            if (musicSlider != null) musicSlider.onValueChanged.AddListener(SetMusicVolume);
+            if (sfxSlider != null) sfxSlider.onValueChanged.AddListener(SetSfxVolume);
+        }
+
+        private void UnsubscribeSliders()
+        {
+            if (masterSlider != null) masterSlider.onValueChanged.RemoveListener(SetMasterVolume);
+            if (musicSlider != null) musicSlider.onValueChanged.RemoveListener(SetMusicVolume);
+            if (sfxSlider != null) sfxSlider.onValueChanged.RemoveListener(SetSfxVolume);
+        }
+
+        private void ConfigureSlider(Slider slider)
+        {
+            if (slider == null)
+            {
+                return;
+            }
+
+            slider.minValue = 0f;
+            slider.maxValue = sliderMaximumValue;
         }
 
         private static void SetSliderValue(Slider slider, float value)

@@ -1231,6 +1231,53 @@ MonoBehaviour:
   m_FirstSelected: {fileID: 0}
   m_sendNavigationEvents: 1
   m_DragThreshold: 5
+--- !u!1 &144984513
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 144984515}
+  - component: {fileID: 144984514}
+  m_Layer: 0
+  m_Name: MenuAudio
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &144984514
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 144984513}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8fc8ff5ceab99aa48992117a4fd228d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  musicClip: {fileID: 8300000, guid: 21b18cfd338339e448319a4424e18413, type: 3}
+  outputMixerGroup: {fileID: 5576084071307068110, guid: 6c9fd08f394eadb4f93e7fbdbf07b640, type: 2}
+  volume: 0.7
+--- !u!4 &144984515
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 144984513}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -149.07939, y: -25.15612, z: -62.88579}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &163998049
 GameObject:
   m_ObjectHideFlags: 0
@@ -3000,7 +3047,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 88.17, y: -27.5}
-  m_SizeDelta: {x: 0, y: 45}
+  m_SizeDelta: {x: 56.34, y: 45}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &439968659
 MonoBehaviour:
@@ -8123,7 +8170,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 61.364998, y: -27.5}
-  m_SizeDelta: {x: 0, y: 55}
+  m_SizeDelta: {x: 122.729996, y: 55}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1111512178
 MonoBehaviour:
@@ -8795,7 +8842,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 68.17, y: -27.5}
-  m_SizeDelta: {x: 0, y: 55}
+  m_SizeDelta: {x: 136.34, y: 55}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1288187889
 MonoBehaviour:
@@ -10518,6 +10565,7 @@ GameObject:
   - component: {fileID: 1559520379}
   - component: {fileID: 1559520378}
   - component: {fileID: 1559520382}
+  - component: {fileID: 1559520383}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -10628,6 +10676,27 @@ MonoBehaviour:
   creditsPanel: {fileID: 1887693164}
   gameplaySceneName: Demo
   loadingTransition: {fileID: 869588022}
+--- !u!114 &1559520383
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1559520377}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8371f8a42e54f75ad9a562b6993f94f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  audioMixer: {fileID: 24100000, guid: 6c9fd08f394eadb4f93e7fbdbf07b640, type: 2}
+  masterParameter: MasterVolume
+  musicParameter: MusicVolume
+  sfxParameter: SfxVolume
+  sliderMaximumValue: 100
+  minimumDecibels: -80
+  masterSlider: {fileID: 56863809}
+  musicSlider: {fileID: 2124382724}
+  sfxSlider: {fileID: 525121636}
 --- !u!1 &1600494036
 GameObject:
   m_ObjectHideFlags: 0
@@ -15622,3 +15691,4 @@ SceneRoots:
   - {fileID: 869588023}
   - {fileID: 261416419}
   - {fileID: 122617391}
+  - {fileID: 144984515}

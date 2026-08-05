@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using FriendOfOurs.Audio;
 using UnityEngine;
 
 namespace FriendOfOurs.Gameplay
@@ -103,6 +104,7 @@ namespace FriendOfOurs.Gameplay
             nextPunchTime = Time.time + punchCooldown;
             int attackIndex = comboCounter.NextAttackIndex(Time.time);
             animationController?.PlayUnarmedAttack(attackIndex);
+            CombatAudioSystem.Active?.PlayPunch();
             combatLayerReleaseTime = Time.time + combatLayerHoldTime;
             hasPendingHit = true;
             pendingHitTime = Time.time + punchHitDelay;
