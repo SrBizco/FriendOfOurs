@@ -42,12 +42,12 @@ namespace Michsky.MUIP
         {
             if (overrideColors == false)
             {
-                bar.color = UIManagerAsset.progressBarColor;
-                background.color = UIManagerAsset.progressBarBackgroundColor;
-                label.color = UIManagerAsset.progressBarLabelColor;
+                if (bar != null) { bar.color = UIManagerAsset.progressBarColor; }
+                if (background != null) { background.color = UIManagerAsset.progressBarBackgroundColor; }
+                if (label != null) { label.color = UIManagerAsset.progressBarLabelColor; }
             }
 
-            if (overrideFonts == false)
+            if (overrideFonts == false && label != null)
             {
                 label.font = UIManagerAsset.progressBarLabelFont;
                 label.fontSize = UIManagerAsset.progressBarLabelFontSize;

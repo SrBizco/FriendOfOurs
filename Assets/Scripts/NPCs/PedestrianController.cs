@@ -816,6 +816,14 @@ namespace FriendOfOurs.NPCs
 
         private void OnDied(DamageInfo damageInfo)
         {
+            PlayerWallet wallet = damageInfo.Attacker != null
+                ? damageInfo.Attacker.GetComponentInParent<PlayerWallet>()
+                : null;
+            if (wallet != null)
+            {
+                wallet.AddMoney(UnityEngine.Random.Range(10, 51));
+            }
+
             threat = damageInfo.Attacker != null ? damageInfo.Attacker.transform : null;
             EnterDeadState();
         }

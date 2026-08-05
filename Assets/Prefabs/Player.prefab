@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 320902404002171998}
   - component: {fileID: 5386210134342658250}
   - component: {fileID: 7269336779455354661}
+  - component: {fileID: -2885275145066186205}
   m_Layer: 7
   m_Name: Player
   m_TagString: Untagged
@@ -224,11 +225,24 @@ MonoBehaviour:
     m_Bits: 1024
   moveSpeed: 4
   rotationSpeed: 540
-  collisionSkin: 0.03
   playerController: {fileID: 2622129726310020680}
   combatController: {fileID: 4888098869027812447}
+  animationController: {fileID: 0}
   vehicleController: {fileID: 5386210134342658250}
   cameraController: {fileID: 0}
+--- !u!114 &-2885275145066186205
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7457107678001931164}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffd6f3c3a85a4eb4c94e30be3b53c5da, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  startingMoney: 5
 --- !u!1001 &423026831510148086
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -11,6 +11,7 @@ namespace FriendOfOurs.Gameplay
 
         public event Action<DamageInfo, float> Damaged;
         public event Action<DamageInfo> Died;
+        public event Action<float, float> Changed;
 
         public float CurrentHealth => hitPoints != null ? hitPoints.Current : maxHealth;
         public float MaxHealth => hitPoints != null ? hitPoints.Maximum : maxHealth;
@@ -35,6 +36,7 @@ namespace FriendOfOurs.Gameplay
             }
 
             Damaged?.Invoke(damageInfo, appliedDamage);
+            Changed?.Invoke(hitPoints.Current, hitPoints.Maximum);
 
             if (hitPoints.IsDead)
             {
@@ -47,10 +49,12 @@ namespace FriendOfOurs.Gameplay
             if (hitPoints == null)
             {
                 hitPoints = new HitPoints(maxHealth, maxHealth);
+                Changed?.Invoke(hitPoints.Current, hitPoints.Maximum);
                 return;
             }
 
             hitPoints.RestoreToFull();
+            Changed?.Invoke(hitPoints.Current, hitPoints.Maximum);
         }
     }
 }
