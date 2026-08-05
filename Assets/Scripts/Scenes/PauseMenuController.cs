@@ -40,6 +40,7 @@ namespace FriendOfOurs.Scenes
         private void OnDisable()
         {
             Time.timeScale = 1f;
+            AudioListener.pause = false;
         }
 
         public void ResumeGame()
@@ -78,7 +79,13 @@ namespace FriendOfOurs.Scenes
                 return;
             }
 
-            SetPaused(false);
+            // Keep gameplay and its audio paused while the loading UI is shown.
+            // The current scene is destroyed on activation, where OnDisable
+            // restores normal time and audio for the main menu.
+            if (pauseScreen != null)
+            {
+                pauseScreen.SetActive(false);
+            }
             loadingTransition.LoadScene(mainMenuSceneName);
         }
 
@@ -86,6 +93,7 @@ namespace FriendOfOurs.Scenes
         {
             isPaused = shouldPause;
             Time.timeScale = shouldPause ? 0f : 1f;
+            AudioListener.pause = shouldPause;
             if (pauseScreen != null)
             {
                 pauseScreen.SetActive(shouldPause);

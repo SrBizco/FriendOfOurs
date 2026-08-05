@@ -6,9 +6,7 @@ namespace FriendOfOurs.NPCs
     [RequireComponent(typeof(PedestrianController))]
     public sealed class PoliceOfficerController : MonoBehaviour
     {
-        [SerializeField, Min(0.1f)] private float detectionDistance = 16f;
-        [SerializeField, Min(0f)] private float eyeHeight = 1.2f;
-        [SerializeField] private LayerMask visionLayers = Physics.DefaultRaycastLayers;
+        [SerializeField, Min(0.1f)] private float detectionDistance = 32f;
 
         private PedestrianController pedestrian;
         private Transform player;
@@ -35,7 +33,10 @@ namespace FriendOfOurs.NPCs
                 return;
             }
 
-            if (!pursuingPlayer && CanSeePlayer())
+            // Once the player is wanted, nearby officers immediately engage.
+            // Requiring an unobstructed ray caused officers behind street props
+            // or other pedestrians to keep behaving like civilians.
+            if (!pursuingPlayer && IsPlayerWithinDetectionDistance())
             {
                 pursuingPlayer = true;
                 pedestrian.SetPersistentCombatTarget(player);
@@ -62,29 +63,11 @@ namespace FriendOfOurs.NPCs
             pedestrian?.ReleasePersistentCombatTarget();
         }
 
-        private bool CanSeePlayer()
+        private bool IsPlayerWithinDetectionDistance()
         {
-            Vector3 origin = transform.position + Vector3.up * eyeHeight;
-            Vector3 target = player.position + Vector3.up * eyeHeight;
-            Vector3 direction = target - origin;
-            float distance = direction.magnitude;
-            if (distance > detectionDistance)
-            {
-                return false;
-            }
-
-            if (distance <= 0.01f)
-            {
-                return true;
-            }
-
-            if (!Physics.Raycast(origin, direction / distance, out RaycastHit hit, distance, visionLayers, QueryTriggerInteraction.Ignore))
-            {
-                return true;
-            }
-
-            return hit.collider != null &&
-                   (hit.collider.transform == player || hit.collider.transform.IsChildOf(player));
+            Vector3 offset = player.position - transform.position;
+            offset.y = 0f;
+            return offset.sqrMagnitude <= detectionDistance * detectionDistance;
         }
     }
 }

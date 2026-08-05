@@ -41,7 +41,6 @@ namespace FriendOfOurs.Scenes
         private IEnumerator LoadSceneRoutine(string sceneName)
         {
             isLoading = true;
-            Time.timeScale = 1f;
             KeepLoadingUiAlive();
 
             SetLoadingScreenVisible(true);

@@ -274,7 +274,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   destinationScene: Demo
   destinationSpawnId: CityGunStoreExit
-  unloadCurrentSceneAfterArrival: 0
+  unloadCurrentSceneAfterArrival: 1
   interactKey: 101
 --- !u!65 &650829733
 BoxCollider:
